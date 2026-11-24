@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Barbería Don Carlos | Asistente Virtual & Reservas</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Playfair Display & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            barber: {
+              bg: '#09090B',
+              surface: '#121215',
+              card: '#1C1C21',
+              border: '#2A2A32',
+              gold: '#FFFFFF',
+              goldHover: '#E4E4E7',
+              amber: '#A1A1AA',
+              cream: '#FFFFFF',
+              muted: '#9CA3AF'
+            }
+          },
+          animation: {
+            'fade-in-up': 'fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+          keyframes: {
+            fadeInUp: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos personalizados para barra de desplazamiento y detalles finos */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121215;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2A2A32;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A1A1AA;
+    }
+
+    /* Animación de puntos escribiendo */
+    .typing-dot {
+      animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes typingBounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Patrón sutil de fondo estilo monocromático */
+    .barber-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-barber-bg text-barber-cream font-sans antialiased min-h-screen flex flex-col selection:bg-white selection:text-black overflow-x-hidden">
+
+  <!-- Toast de Notificación (Reemplazo elegante de alert) -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ÁREA PRINCIPAL DEL CHATBOT -->
+  <main class="flex-1 flex flex-col h-screen max-h-screen w-full bg-barber-bg barber-pattern relative">
+
+    <!-- ENCABEZADO DEL CHAT -->
+    <header class="bg-barber-surface/95 backdrop-blur-md border-b border-barber-border px-4 sm:px-6 py-3.5 flex items-center justify-between shrink-0 z-20 shadow-md">
+      <div class="flex items-center gap-3.5">
+        <!-- Avatar del Bot con Indicador En Línea -->
+        <div class="relative">
+          <div class="w-11 h-11 rounded-full bg-gradient-to-br from-white to-zinc-400 p-[2px] shadow-md">
+            <div class="w-full h-full rounded-full bg-barber-surface flex items-center justify-center text-white">
+              <i class="fa-solid fa-scissors text-lg"></i>
+            </div>
+          </div>
+          <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-white ring-2 ring-barber-surface" title="En línea"></span>
+        </div>
+
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="font-serif font-bold text-base sm:text-lg text-white leading-tight">
+              Don Carlos <span class="hidden sm:inline text-zinc-400 font-sans font-normal text-xs">• Asistente Virtual</span>
+            </h2>
+            <span class="text-[11px] bg-white/10 text-white border border-white/25 px-2 py-0.5 rounded-full font-medium">
+              Don Carlos
+            </span>
+          </div>
+          <p class="text-xs text-zinc-300 font-medium flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+            En línea • Consultas de precios y productos
+          </p>
+        </div>
+      </div>
+
+      <!-- Acciones del Encabezado -->
+      <div class="flex items-center gap-2">
+        <!-- Enlace directo a Turnos en encabezado -->
+        <a
+          href="file:///C:/Users/XPC/Downloads/Turnos.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-white/10 hover:bg-white text-white hover:text-black border border-white/30 transition text-xs font-semibold flex items-center gap-2"
+          title="Abrir Turnos.html"
+        >
+          <i class="fa-regular fa-calendar-check"></i>
+          <span class="hidden sm:inline">Turnos</span>
+        </a>
+
+        <!-- Botón Menú Principal -->
+        <button onclick="handleQuickAction('Menú principal')" class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-barber-card hover:bg-barber-border text-white border border-barber-border transition text-xs font-medium flex items-center gap-2" title="Volver al menú principal">
+          <i class="fa-solid fa-bars text-zinc-300"></i>
+          <span class="hidden sm:inline">Menú</span>
+        </button>
+
+        <!-- Botón Reiniciar Conversación -->
+        <button onclick="resetConversation()" class="p-2.5 sm:px-3.5 sm:py-2 rounded-xl bg-barber-card hover:bg-zinc-800 text-zinc-400 hover:text-white border border-barber-border hover:border-zinc-500 transition text-xs font-medium flex items-center gap-2" title="Reiniciar chat">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span class="hidden sm:inline">Reiniciar</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENEDOR DE MENSAJES -->
+    <div id="chat-messages" class="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-5 scroll-smooth">
+      <!-- Los mensajes se inyectan dinámicamente aquí -->
+    </div>
+
+    <!-- INDICADOR DE "ESCRIBIENDO..." -->
+    <div id="typing-indicator" class="hidden px-4 sm:px-6 pb-2">
+      <div class="flex items-end gap-2.5 max-w-xs">
+        <div class="w-8 h-8 rounded-full bg-barber-card border border-barber-border flex items-center justify-center text-white text-xs shrink-0">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <div class="bg-barber-surface border border-barber-border rounded-2xl rounded-bl-sm px-4 py-3 flex items-center gap-1.5 shadow-sm">
+          <span class="w-2 h-2 rounded-full bg-white typing-dot"></span>
+          <span class="w-2 h-2 rounded-full bg-zinc-300 typing-dot"></span>
+          <span class="w-2 h-2 rounded-full bg-zinc-400 typing-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÁREA INFERIOR: RESPUESTAS RÁPIDAS + INPUT -->
+    <div class="bg-barber-surface/95 backdrop-blur-md border-t border-barber-border px-4 sm:px-6 pt-3 pb-4 shrink-0 z-20">
+      <!-- Contenedor de Quick Replies -->
+      <div id="quick-replies" class="flex items-center gap-2 overflow-x-auto pb-3 no-scrollbar">
+        <!-- Botones dinámicos -->
+      </div>
+
+      <!-- Formulario de Entrada de Texto -->
+      <form id="chat-form" class="flex items-center gap-2.5 max-w-4xl mx-auto">
+        <div class="relative flex-1">
+          <input
+            type="text"
+            id="user-input"
+            autocomplete="off"
+            placeholder="Pregunta por precios de cortes, polvos, ceras, sprays o turnos..."
+            class="w-full bg-barber-bg border border-barber-border focus:border-white rounded-xl pl-4 pr-10 py-3.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-white/40 transition"
+          />
+          <button
+            type="button"
+            onclick="handleQuickAction('Quiero reservar un turno')"
+            title="Obtener enlace de turnos"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white transition p-1"
+          >
+            <i class="fa-regular fa-calendar-check"></i>
+          </button>
+        </div>
+
+        <button
+          type="submit"
+          id="send-btn"
+          class="bg-gradient-to-r from-white to-zinc-200 hover:from-zinc-200 hover:to-white text-black font-bold px-5 py-3.5 rounded-xl shadow-lg shadow-white/10 transition transform active:scale-95 flex items-center justify-center gap-2 shrink-0"
+        >
+          <span class="hidden sm:inline text-sm">Enviar</span>
+          <i class="fa-solid fa-paper-plane text-sm"></i>
+        </button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. DATOS DEL NEGOCIO Y CONEXIÓN CON TURNOS.HTML
+    // =========================================================================
+    const BARBERSHOP_DATA = {
+      name: "Barbería Don Carlos",
+      botName: "Don Carlos",
+      bookingUrl: "file:///C:/Users/XPC/Downloads/Turnos.html",
+      storageKey: "donCarlosTurnos",
+      address: "Av. San Martín 1420, Local 4, Centro",
+      reference: "A media cuadra de la Plaza Principal, frente al Café Histórico.",
+      hours: [
+        { days: "Lunes a Viernes (Mañana)", time: "08:00 a 12:00 hs" },
+        { days: "Lunes a Viernes (Tarde)", time: "16:00 a 20:00 hs" },
+        { days: "Sábados y Domingos", time: "Cerrado por descanso" }
+      ],
+      phone: "+54 9 3482 55-8910",
+      services: [
+        {
+          id: "corte-cabello",
+          name: "Corte de cabello",
+          turneroValue: "Corte de Cabello",
+          price: "$8.000",
+          duration: "45 min",
+          icon: "fa-scissors",
+          description: "Estilos clásicos, degradados (fades) y cortes urbanos con terminación a navaja."
+        },
+        {
+          id: "corte-barba",
+          name: "Corte y barba",
+          turneroValue: "Corte y Barba",
+          price: "$12.000",
+          duration: "45 min",
+          icon: "fa-crown",
+          popular: true,
+          description: "Combo integral con perfilado completo, vapor, toalla caliente y styling."
+        },
+        {
+          id: "perfilado-barba",
+          name: "Perfilado de barba",
+          turneroValue: "Perfilado de Barba",
+          price: "$6.000",
+          duration: "45 min",
+          icon: "fa-spa",
+          description: "Esculpido preciso, perfilado con navaja, aceites hidratantes y bálsamo nutritivo."
+        }
+      ],
+      products: [
+        {
+          id: "polvo-texturizador",
+          category: "polvo",
+          name: "Polvo Texturizador Volumen Mate (20g)",
+          price: "$9.500",
+          icon: "fa-wand-magic-sparkles",
+          description: "Aporta volumen instantáneo desde la raíz, textura natural y efecto mate sin dejar residuos."
+        },
+        {
+          id: "cera-mate",
+          category: "cera",
+          name: "Cera Capilar Fijación Fuerte / Mate (100g)",
+          price: "$7.500",
+          icon: "fa-jar",
+          description: "Moldea y controla el peinado todo el día con acabado natural sin brillo graso. Fácil de lavar con agua."
+        },
+        {
+          id: "cera-brillo",
+          category: "cera",
+          name: "Pomada / Cera Efecto Brillo Clásico (100g)",
+          price: "$8.000",
+          icon: "fa-gem",
+          description: "Ideal para peinados clásicos, slick back y pompadour con fijación flexible y brillo elegante."
+        },
+        {
+          id: "spray-fijador",
+          category: "spray",
+          name: "Spray Fijador Extra Fuerte (250ml)",
+          price: "$8.500",
+          icon: "fa-spray-can",
+          description: "Sella el peinado contra la humedad y el viento manteniendo movimiento natural sin acartonar."
+        },
+        {
+          id: "spray-sal-marina",
+          category: "spray",
+          name: "Sea Salt Spray Texturizador (200ml)",
+          price: "$7.800",
+          icon: "fa-water",
+          description: "Spray de sal marina para lograr ondas naturales, cuerpo y efecto playero descontracturado."
+        }
+      ],
+      barbers: [
+        {
+          id: "carlos",
+          name: "Don Carlos",
+          role: "Maestro Barbero & Fundador",
+          specialty: "Cortes clásicos a tijera y ritual de navaja",
+          avatar: "DC"
+        },
+        {
+          id: "mateo",
+          name: "Mateo R.",
+          role: "Especialista Urbano",
+          specialty: "Skin Fades, texturizados y diseños",
+          avatar: "MR"
+        },
+        {
+          id: "lucas",
+          name: "Lucas G.",
+          role: "Barbero Senior",
+          specialty: "Barbas esculpidas y asesoría de imagen",
+          avatar: "LG"
+        }
+      ]
+    };
+
+    // =========================================================================
+    // 1B. SINCRONIZACIÓN CON LOCALSTORAGE DE TURNOS.HTML ('donCarlosTurnos')
+    // =========================================================================
+    const ALL_SLOTS = ["08:00", "08:45", "09:30", "10:15", "11:00", "16:00", "16:45", "17:30", "18:15", "19:00"];
+
+    function getStoredBookings() {
+      try {
+        const raw = localStorage.getItem(BARBERSHOP_DATA.storageKey);
+        const parsed = JSON.parse(raw || "[]");
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function getNextBusinessDayInfo() {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      while (d.getDay() === 0 || d.getDay() === 6) {
+        d.setDate(d.getDate() + 1);
+      }
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const iso = `${y}-${m}-${day}`;
+      const isToday = iso === new Date().toISOString().slice(0, 10);
+      const label = isToday ? "Hoy" : `${day}/${m}`;
+
+      const bookings = getStoredBookings().filter(
+        b => (b.date === iso || b.fecha === iso) && b.status !== "Cancelado" && b.estado !== "Cancelado"
+      );
+      const bookedTimes = bookings.map(b => b.time || b.hora);
+      const freeSlots = ALL_SLOTS.filter(s => !bookedTimes.includes(s));
+
+      return { iso, label, freeSlots, totalSlots: ALL_SLOTS.length };
+    }
+
+    function buildTurneroUrl(_serviceTurneroName = null) {
+      return BARBERSHOP_DATA.bookingUrl;
+    }
+
+    // Escucha cambios en tiempo real cuando el usuario confirma un turno en Turnos.html
+    window.addEventListener("storage", (event) => {
+      if (event.key === BARBERSHOP_DATA.storageKey) {
+        showToast("Agenda sincronizada con Turnos.html", "success");
+      }
+    });
+
+    // Referencias DOM
+    const chatMessagesEl = document.getElementById("chat-messages");
+    const quickRepliesEl = document.getElementById("quick-replies");
+    const typingIndicatorEl = document.getElementById("typing-indicator");
+    const chatFormEl = document.getElementById("chat-form");
+    const userInputEl = document.getElementById("user-input");
+
+    // =========================================================================
+    // 2. UTILIDADES DE INTERFAZ (TOAST, SCROLL, PORTAPAPELES Y HORA)
+    // =========================================================================
+    function showToast(message, type = "gold") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const borderClass = type === "success" ? "border-white/60" : "border-zinc-500/60";
+      const iconClass = type === "success" ? "fa-circle-check text-white" : "fa-scissors text-zinc-200";
+
+      toast.className = `pointer-events-auto bg-barber-surface/95 backdrop-blur-md border ${borderClass} text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs sm:text-sm animate-fade-in-up`;
+      toast.innerHTML = `<i class="fa-solid ${iconClass}"></i><span>${message}</span>`;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+        toast.style.transition = "all 0.25s ease";
+        setTimeout(() => toast.remove(), 250);
+      }, 3200);
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+      });
+    }
+
+    function getCurrentTimeString() {
+      const now = new Date();
+      return now.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function copyTextToClipboard(text) {
+      try {
+        const tempInput = document.createElement("textarea");
+        tempInput.value = text;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        showToast("Enlace de turnos copiado al portapapeles", "success");
+      } catch (err) {
+        showToast("No se pudo copiar automáticamente", "gold");
+      }
+    }
+
+    function escapeHTML(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // =========================================================================
+    // 3. RENDERIZADO DE MENSAJES Y RESPUESTAS RÁPIDAS
+    // =========================================================================
+    function appendUserMessage(text) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex justify-end animate-fade-in-up";
+      wrapper.innerHTML = `
+        <div class="max-w-[85%] sm:max-w-[72%]">
+          <div class="bg-gradient-to-br from-white to-zinc-200 text-black font-medium px-4 py-3 rounded-2xl rounded-br-sm shadow-md text-sm leading-relaxed">
+            ${escapeHTML(text)}
+          </div>
+          <p class="text-[10px] text-zinc-400 text-right mt-1 pr-1">${getCurrentTimeString()}</p>
+        </div>
+      `;
+      chatMessagesEl.appendChild(wrapper);
+      scrollToBottom();
+    }
+
+    function appendBotMessage(htmlContent, quickReplies = []) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex items-start gap-3 animate-fade-in-up";
+      wrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-barber-surface border border-white/30 flex items-center justify-center text-white text-xs shrink-0 mt-1 shadow-sm">
+          <i class="fa-solid fa-scissors"></i>
+        </div>
+        <div class="max-w-[88%] sm:max-w-[78%] space-y-1">
+          <div class="bg-barber-surface border border-barber-border text-white px-4 py-3.5 rounded-2xl rounded-tl-sm shadow-md text-sm leading-relaxed">
+            ${htmlContent}
+          </div>
+          <p class="text-[10px] text-zinc-400 pl-1">${BARBERSHOP_DATA.botName} • ${getCurrentTimeString()}</p>
+        </div>
+      `;
+      chatMessagesEl.appendChild(wrapper);
+      renderQuickReplies(quickReplies);
+      scrollToBottom();
+    }
+
+    function renderQuickReplies(options) {
+      quickRepliesEl.innerHTML = "";
+      if (!options || options.length === 0) return;
+
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        const isPrimary = opt.primary;
+        btn.className = isPrimary
+          ? "shrink-0 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white text-white hover:text-black border border-white/40 text-xs font-semibold transition flex items-center gap-1.5 shadow-sm"
+          : "shrink-0 px-3.5 py-2 rounded-xl bg-barber-card hover:bg-barber-border text-zinc-200 border border-barber-border text-xs font-medium transition flex items-center gap-1.5";
+
+        btn.innerHTML = `${opt.icon ? `<i class="${opt.icon}"></i>` : ""}<span>${opt.label}</span>`;
+        btn.onclick = () => handleQuickAction(opt.value || opt.label);
+        quickRepliesEl.appendChild(btn);
+      });
+    }
+
+    function botReplyWithDelay(htmlContent, quickReplies = [], delay = 480) {
+      typingIndicatorEl.classList.remove("hidden");
+      scrollToBottom();
+
+      setTimeout(() => {
+        typingIndicatorEl.classList.add("hidden");
+        appendBotMessage(htmlContent, quickReplies);
+      }, delay);
+    }
+
+    // =========================================================================
+    // 4. RESPUESTAS DEL ASISTENTE (SERVICIOS, PRODUCTOS Y ENLACE DE TURNOS)
+    // =========================================================================
+    function showBookingLinkResponse(serviceObj = null) {
+      const targetUrl = buildTurneroUrl(serviceObj ? serviceObj.turneroValue : null);
+      const info = getNextBusinessDayInfo();
+      const stored = getStoredBookings();
+      const lastBooking = stored.length > 0 ? stored[stored.length - 1] : null;
+
+      const freePreview = info.freeSlots.length > 0
+        ? info.freeSlots.slice(0, 5).map(h => `<span class="px-2 py-0.5 rounded bg-white/10 text-zinc-200 border border-white/25 text-[11px] font-semibold">${h} hs</span>`).join(" ")
+        : `<span class="text-xs text-zinc-400">Sin cupos libres para ${info.label}</span>`;
+
+      const serviceNote = serviceObj
+        ? `<p class="text-xs text-zinc-300 font-medium"><i class="fa-solid fa-check mr-1 text-white"></i>Servicio consultado: <strong class="text-white">${serviceObj.name} (${serviceObj.price})</strong></p>`
+        : "";
+
+      const lastBookingHtml = lastBooking
+        ? `<div class="bg-barber-card/80 border border-barber-border rounded-lg p-2.5 text-[11px] text-zinc-400 flex items-center justify-between gap-2">
+            <span><i class="fa-solid fa-ticket text-white mr-1"></i>Último turno registrado: <strong class="text-white">#${lastBooking.id}</strong> (${lastBooking.service || lastBooking.servicio} • ${lastBooking.time || lastBooking.hora} hs)</span>
+           </div>`
+        : "";
+
+      botReplyWithDelay(
+        `<div class="space-y-3">
+          <p class="font-semibold text-white"><i class="fa-regular fa-calendar-check mr-1.5"></i>Reserva de Turno Online</p>
+          <p class="text-xs sm:text-sm text-zinc-200">
+            Acá tenés el enlace directo para reservar tu turno:
+          </p>
+          ${serviceNote}
+          <div class="bg-barber-bg border border-white/30 rounded-xl p-3.5 space-y-3">
+            <div>
+              <span class="block text-[11px] text-zinc-400 mb-1.5">Próximos horarios libres (${info.label}):</span>
+              <div class="flex flex-wrap gap-1.5">${freePreview}</div>
+            </div>
+            <a
+              href="${targetUrl}"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-white to-zinc-200 hover:from-zinc-200 hover:to-white text-black font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md"
+            >
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>Ir a Reservar Turno</span>
+            </a>
+            <div class="flex items-center justify-between gap-2 pt-1 border-t border-barber-border/60">
+              <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="text-[11px] text-zinc-200 hover:text-white hover:underline break-all select-all">${targetUrl}</a>
+              <button
+                type="button"
+                onclick="copyTextToClipboard('${targetUrl}')"
+                class="shrink-0 px-2.5 py-1 rounded-lg bg-barber-card hover:bg-barber-border text-white border border-barber-border text-[11px] font-medium transition"
+              >
+                <i class="fa-regular fa-copy text-zinc-300 mr-1"></i>Copiar
+              </button>
+            </div>
+          </div>
+          ${lastBookingHtml}
+        </div>`,
+        [
+          { label: "¿Cuánto está cada servicio?", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-scissors" },
+          { label: "Precios de polvos, ceras y sprays", value: "Precios de polvos, ceras y sprays", icon: "fa-solid fa-pump-soap" },
+          { label: "Horarios de atención", value: "Horarios de atención", icon: "fa-regular fa-clock" }
+        ]
+      );
+    }
+
+    function showServicesCatalog(highlightServiceId = null) {
+      const listToShow = highlightServiceId
+        ? BARBERSHOP_DATA.services.filter(s => s.id === highlightServiceId)
+        : BARBERSHOP_DATA.services;
+
+      const cards = listToShow.map(s => `
+        <div class="bg-barber-bg/80 border border-barber-border rounded-xl p-3 flex items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-semibold text-white text-xs sm:text-sm">${s.name}</span>
+              ${s.popular ? '<span class="text-[10px] bg-white/15 text-white px-1.5 py-0.5 rounded font-bold">MÁS PEDIDO</span>' : ""}
+            </div>
+            <p class="text-[11px] text-zinc-400 mt-0.5 leading-snug">${s.description}</p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-[10px] text-zinc-300"><i class="fa-regular fa-clock mr-1"></i>${s.duration}</span>
+              <a href="${buildTurneroUrl(s.turneroValue)}" target="_blank" rel="noopener noreferrer" class="text-[11px] font-semibold text-white hover:underline flex items-center gap-1">
+                <span>Sacar turno</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </a>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="block font-bold text-white text-base">${s.price}</span>
+          </div>
+        </div>
+      `).join("");
+
+      const title = highlightServiceId
+        ? `Precio del servicio • ${BARBERSHOP_DATA.name}`
+        : `Lista de Precios de Servicios • ${BARBERSHOP_DATA.name}`;
+
+      botReplyWithDelay(
+        `<p class="font-semibold text-white mb-2"><i class="fa-solid fa-scissors mr-1.5"></i>${title}</p>
+         <div class="space-y-2">${cards}</div>
+         <p class="text-xs text-zinc-400 mt-2.5">¿Te gustaría sacar un turno para alguno de estos servicios?</p>`,
+        [
+          { label: "Quiero reservar un turno", value: "Quiero reservar un turno", icon: "fa-regular fa-calendar-check", primary: true },
+          ...(highlightServiceId ? [{ label: "Ver todos los servicios", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-list" }] : []),
+          { label: "Precios de polvos, ceras y sprays", value: "Precios de polvos, ceras y sprays", icon: "fa-solid fa-pump-soap" }
+        ]
+      );
+    }
+
+    function showProductsCatalog(categoryFilter = null) {
+      const filtered = categoryFilter
+        ? BARBERSHOP_DATA.products.filter(p => p.category === categoryFilter)
+        : BARBERSHOP_DATA.products;
+
+      const cards = filtered.map(p => `
+        <div class="bg-barber-bg/80 border border-barber-border rounded-xl p-3 flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-white/10 text-white flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid ${p.icon} text-xs"></i>
+            </div>
+            <div>
+              <span class="font-semibold text-white text-xs sm:text-sm block">${p.name}</span>
+              <p class="text-[11px] text-zinc-400 mt-0.5 leading-snug">${p.description}</p>
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <span class="block font-bold text-white text-sm sm:text-base">${p.price}</span>
+          </div>
+        </div>
+      `).join("");
+
+      const categoryTitles = {
+        polvo: "Polvos Texturizadores para el Cabello",
+        cera: "Ceras y Pomadas Capilares",
+        spray: "Sprays Fijadores y Texturizadores"
+      };
+      const heading = categoryFilter ? categoryTitles[categoryFilter] : "Productos Capilares: Polvos, Ceras y Sprays";
+
+      botReplyWithDelay(
+        `<p class="font-semibold text-white mb-2"><i class="fa-solid fa-pump-soap mr-1.5"></i>${heading}</p>
+         <div class="space-y-2">${cards}</div>
+         <p class="text-[11px] text-zinc-400 mt-2.5">Todos los productos están disponibles para retiro directo en el local.</p>`,
+        [
+          ...(categoryFilter ? [{ label: "Ver todos los productos", value: "Precios de polvos, ceras y sprays", icon: "fa-solid fa-layer-group" }] : []),
+          { label: "¿Cuánto está cada servicio?", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-scissors" },
+          { label: "Quiero reservar un turno", value: "Quiero reservar un turno", icon: "fa-regular fa-calendar-check", primary: true }
+        ]
+      );
+    }
+
+    function showLocationAndHours() {
+      const hoursList = BARBERSHOP_DATA.hours.map(h => `
+        <li class="flex justify-between text-xs py-1 border-b border-barber-border/40 last:border-0">
+          <span class="text-zinc-400">${h.days}:</span>
+          <span class="font-medium text-white text-right">${h.time}</span>
+        </li>
+      `).join("");
+
+      botReplyWithDelay(
+        `<div class="space-y-3">
+          <div>
+            <p class="font-semibold text-white mb-1"><i class="fa-regular fa-clock mr-1.5"></i>Horarios de Atención</p>
+            <ul class="bg-barber-bg/70 border border-barber-border rounded-xl p-2.5">${hoursList}</ul>
+          </div>
+        </div>`,
+        [
+          { label: "Quiero reservar un turno", value: "Quiero reservar un turno", icon: "fa-regular fa-calendar-check", primary: true },
+          { label: "¿Cuánto está cada servicio?", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-scissors" }
+        ]
+      );
+    }
+
+    function showBarbersTeam() {
+      const list = BARBERSHOP_DATA.barbers.map(b => `
+        <div class="bg-barber-bg/70 border border-barber-border rounded-xl p-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/15 border border-white/30 text-white font-serif font-bold flex items-center justify-center shrink-0">
+            ${b.avatar}
+          </div>
+          <div>
+            <p class="font-semibold text-white text-xs sm:text-sm">${b.name}</p>
+            <p class="text-[11px] text-zinc-300">${b.role}</p>
+            <p class="text-[11px] text-zinc-400 mt-0.5">${b.specialty}</p>
+          </div>
+        </div>
+      `).join("");
+
+      botReplyWithDelay(
+        `<p class="font-semibold text-white mb-2"><i class="fa-solid fa-users mr-1.5"></i>Nuestro Equipo de Barberos</p>
+         <div class="space-y-2">${list}</div>`,
+        [
+          { label: "Quiero reservar un turno", value: "Quiero reservar un turno", icon: "fa-regular fa-calendar-check", primary: true },
+          { label: "¿Cuánto está cada servicio?", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-scissors" }
+        ]
+      );
+    }
+
+    function showMainMenu() {
+      botReplyWithDelay(
+        `<p>¿En qué te puedo ayudar hoy en <strong>${BARBERSHOP_DATA.name}</strong>? Elige una consulta rápida o escríbeme tu pregunta:</p>`,
+        getDefaultQuickReplies()
+      );
+    }
+
+    function getDefaultQuickReplies() {
+      return [
+        { label: "¿Cuánto está cada servicio?", value: "¿Cuánto está cada servicio?", icon: "fa-solid fa-scissors", primary: true },
+        { label: "Polvos, ceras y sprays", value: "Precios de polvos, ceras y sprays", icon: "fa-solid fa-pump-soap" },
+        { label: "Reservar un turno", value: "Quiero reservar un turno", icon: "fa-regular fa-calendar-check" },
+        { label: "Horarios de atención", value: "Horarios de atención", icon: "fa-regular fa-clock" }
+      ];
+    }
+
+    // =========================================================================
+    // 5. PROCESAMIENTO DE ACCIONES Y LENGUAJE NATURAL (NLP)
+    // =========================================================================
+    function handleQuickAction(text) {
+      appendUserMessage(text);
+      processUserMessage(text);
+    }
+
+    function processUserMessage(text) {
+      const lower = text.toLowerCase().trim();
+
+      // 1. Menú principal
+      if (lower === "menú principal" || lower === "menu principal" || lower === "menu" || lower === "menú") {
+        showMainMenu();
+        return;
+      }
+
+      // 2. Intención de reservar / sacar turno -> Envía enlace exacto a file:///C:/Users/XPC/Downloads/Turnos.html
+      if (
+        lower.includes("reservar") ||
+        lower.includes("turno") ||
+        lower.includes("cita") ||
+        lower.includes("agendar") ||
+        lower.includes("sacar hora")
+      ) {
+        let matchedService = null;
+        if (lower.includes("corte y barba") || lower.includes("combo")) {
+          matchedService = BARBERSHOP_DATA.services.find(s => s.id === "corte-barba");
+        } else if (lower.includes("perfilado") || (lower.includes("barba") && !lower.includes("corte"))) {
+          matchedService = BARBERSHOP_DATA.services.find(s => s.id === "perfilado-barba");
+        } else if (lower.includes("corte") || lower.includes("cabello")) {
+          matchedService = BARBERSHOP_DATA.services.find(s => s.id === "corte-cabello");
+        }
+        showBookingLinkResponse(matchedService);
+        return;
+      }
+
+      // 3. Consultas específicas o generales de productos capilares (polvos, ceras, sprays)
+      const asksPolvo = lower.includes("polvo");
+      const asksCera = lower.includes("cera") || lower.includes("pomada");
+      const asksSpray = lower.includes("spray") || lower.includes("fijador") || lower.includes("sal marina");
+      const asksProductos = lower.includes("producto") || lower.includes("capilar");
+
+      if (asksPolvo || asksCera || asksSpray || asksProductos) {
+        const countCategories = [asksPolvo, asksCera, asksSpray].filter(Boolean).length;
+        if (countCategories === 1 && !asksProductos) {
+          if (asksPolvo) showProductsCatalog("polvo");
+          else if (asksCera) showProductsCatalog("cera");
+          else if (asksSpray) showProductsCatalog("spray");
+        } else {
+          showProductsCatalog(null);
+        }
+        return;
+      }
+
+      // 4. Consultas de servicios específicos
+      if (lower.includes("corte y barba") || lower.includes("combo")) {
+        showServicesCatalog("corte-barba");
+        return;
+      }
+      if (lower.includes("perfilado") || (lower.includes("barba") && !lower.includes("corte"))) {
+        showServicesCatalog("perfilado-barba");
+        return;
+      }
+      if ((lower.includes("corte") || lower.includes("cabello") || lower.includes("pelo")) && !lower.includes("cada servicio") && !lower.includes("servicios")) {
+        showServicesCatalog("corte-cabello");
+        return;
+      }
+
+      // 5. Consultas generales de precios y servicios
+      if (
+        lower.includes("servicio") ||
+        lower.includes("precio") ||
+        lower.includes("cuanto esta") ||
+        lower.includes("cuánto está") ||
+        lower.includes("cuanto sale") ||
+        lower.includes("cuánto sale") ||
+        lower.includes("costo") ||
+        lower.includes("valor") ||
+        lower.includes("tarifa")
+      ) {
+        showServicesCatalog();
+        return;
+      }
+
+      // 6. Ubicación y horarios
+      if (
+        lower.includes("horario") ||
+        lower.includes("hora") ||
+        lower.includes("abierto") ||
+        lower.includes("ubicacion") ||
+        lower.includes("ubicación") ||
+        lower.includes("direccion") ||
+        lower.includes("dirección") ||
+        lower.includes("donde") ||
+        lower.includes("dónde")
+      ) {
+        showLocationAndHours();
+        return;
+      }
+
+      // 7. Equipo de barberos
+      if (
+        lower.includes("barbero") ||
+        lower.includes("quien corta") ||
+        lower.includes("equipo") ||
+        lower.includes("carlos")
+      ) {
+        showBarbersTeam();
+        return;
+      }
+
+      // 8. Saludos y agradecimientos
+      if (
+        lower.includes("hola") ||
+        lower.includes("buenas") ||
+        lower.includes("buen dia") ||
+        lower.includes("buen día") ||
+        lower.includes("que tal") ||
+        lower.includes("qué tal")
+      ) {
+        botReplyWithDelay(
+          `<p>¡Hola! Bienvenido a <strong>${BARBERSHOP_DATA.name}</strong> ✂️. Puedes consultarme por el precio de cada servicio, valores de polvos, ceras y sprays, o pedir el enlace para reservar tu turno.</p>`,
+          getDefaultQuickReplies()
+        );
+        return;
+      }
+
+      if (lower.includes("gracias")) {
+        botReplyWithDelay(
+          `<p>¡Un placer ayudarte! En <strong>${BARBERSHOP_DATA.name}</strong> estamos a tu disposición. ¿Deseas consultar algo más?</p>`,
+          getDefaultQuickReplies()
+        );
+        return;
+      }
+
+      // 9. Respuesta por defecto
+      botReplyWithDelay(
+        `<p>Entiendo que consultas sobre <em>"${escapeHTML(text)}"</em>. Puedo informarte sobre el precio de nuestros servicios, nuestro catálogo de polvos, ceras y sprays, o pasarte el enlace directo para turnos:</p>`,
+        getDefaultQuickReplies()
+      );
+    }
+
+    // =========================================================================
+    // 6. INICIALIZACIÓN Y EVENTOS DEL FORMULARIO
+    // =========================================================================
+    chatFormEl.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const val = userInputEl.value.trim();
+      if (!val) return;
+
+      userInputEl.value = "";
+      appendUserMessage(val);
+      processUserMessage(val);
+    });
+
+    function resetConversation() {
+      chatMessagesEl.innerHTML = "";
+      initWelcomeMessage();
+      showToast("Conversación reiniciada", "gold");
+    }
+
+    function initWelcomeMessage() {
+      appendBotMessage(
+        `<div class="space-y-2">
+          <p class="font-serif text-base font-bold text-white">¡Bienvenido a ${BARBERSHOP_DATA.name}!</p>
+          <p class="text-zinc-200">Soy tu asistente virtual. Pregúntame por el <strong class="text-white">precio de cada servicio</strong>, valores de <strong class="text-white">polvos, ceras y sprays</strong> para el cabello, o pídelo si deseas el enlace para reservar tu turno.</p>
+          <p class="text-xs text-zinc-400">Selecciona una consulta rápida abajo o escribe tu pregunta:</p>
+        </div>`,
+        getDefaultQuickReplies()
+      );
+    }
+
+    // Arranque al cargar la página
+    window.addEventListener("DOMContentLoaded", () => {
+      initWelcomeMessage();
+    });
+  </script>
+</body>
+</html>
